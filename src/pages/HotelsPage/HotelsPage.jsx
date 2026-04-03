@@ -13,7 +13,10 @@ export const HotelsPage = ()=>{
         isLoading, 
         fetchHotels, 
         createHotel, 
-        removeHotel} = useAppContext();
+        removeHotel,
+        fetchAllReviews,
+        allReviews
+    } = useAppContext();
 
         const [query, setQuery] = useState({
             page: 0,
@@ -25,6 +28,7 @@ export const HotelsPage = ()=>{
 
         useEffect(()=>{
             fetchHotels(query)
+            fetchAllReviews()
         },[])
 
         const closeModal = (modalId) => {
@@ -53,6 +57,7 @@ export const HotelsPage = ()=>{
         const handleDeleteHotel = async (hotelId) =>{
             await removeHotel(hotelId)
         }
+
     return(
         <>
         <header className="py-5 mb-4 bg-white border rounded-3 shadow-sm">
@@ -65,6 +70,9 @@ export const HotelsPage = ()=>{
         </header>
         <AlertMessage message={error}/>
         <div className="d-flex gap-2 mb-4">
+            <button className="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+                Paieška
+            </button>
             <button className="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#createHotelModal">
                 Naujas viešbutis
             </button>
@@ -79,6 +87,21 @@ export const HotelsPage = ()=>{
                  />
             ))}
         </div>
+
+        <div className="card shadow-sm mt-2">
+            <div className="card-header">Visi atsiliepimai</div>
+            <ul className="list-group list-group-flush">
+                {allReviews.length === 0 ?(
+                    <li className="list-group-item">Atsiliepimu nera</li>
+                ):(
+                    allReviews.map((review)=>(
+                        <li className="list-group-item" key={review.id}>
+                            {review.hotelName || `Viešbutis #${review.hotelId}`} | Įvertinimas {review.rating}/5 | {review.review}
+                        </li>
+                    ))
+                )}
+            </ul>
+        </div>
         <div className="modal fade" id="createHotelModal" tabIndex="-1" aria-hidden="true">
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">
@@ -92,6 +115,58 @@ export const HotelsPage = ()=>{
                 </div>
             </div>
         </div>
+
+        <div className="modal fade" id="searchModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-lg">
+        <div className="modal-content">
+        <div className="modal-header">
+        <h5 className="modal-title">Paieška ir rikiavimas</h5>
+        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+        </div>
+        <div className="modal-body">
+        <form className="row g-3" onSubmit={handleSearch}>
+        <div className="col-md-4">
+        <label className="form-label">Paieška pagal pavadinimą</label>
+        <input
+                            className="form-control"
+                            value={query.search}
+                            onChange={(event) => setQuery((current) => ({ ...current, search: event.target.value }))}
+                        />
+        </div>
+        <div className="col-md-3">
+        <label className="form-label">Rikiavimo laukas</label>
+        <select
+                            className="form-select"
+                            value={query.sortBy}
+                            onChange={(event) => setQuery((current) => ({ ...current, sortBy: event.target.value }))}
+        >
+        <option value="id">id</option>
+        <option value="name">name</option>
+        <option value="roomPrice">roomPrice</option>
+        <option value="comfort">comfort</option>
+        </select>
+        </div>
+        <div className="col-md-3">
+        <label className="form-label">Rikiavimo kryptis</label>
+        <select
+                            className="form-select"
+                            value={query.sortDir}
+                            onChange={(event) => setQuery((current) => ({ ...current, sortDir: event.target.value }))}
+        >
+        <option value="asc">asc</option>
+        <option value="desc">desc</option>
+        </select>
+        </div>
+        <div className="col-md-2 d-flex align-items-end">
+        <button type="submit" className="btn btn-primary w-100" disabled={isLoading}>
+                            Filtruoti
+        </button>
+        </div>
+        </form>
+        </div>
+        </div>
+        </div>
+    </div>
         </>
     )
 }

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import { authService } from "../services/authService";
 import { hotelsService } from "../services/hotelsService";
+import { reviewsService } from "../services/reviewsService";
 
 const AppContext = createContext(null);
 
@@ -21,6 +22,8 @@ export const AppProvider  = ({children}) =>{
     const [selectedHotel, setSetectedHotel] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
+    const [hotelReviews, setHotelReviews] = useState([])
+    const [allReviews, setAllReviews] = useState([])
 
     const token = auth?.token || ''
     const isAuthenticated = Boolean(token)
@@ -35,6 +38,8 @@ export const AppProvider  = ({children}) =>{
         setHotels([])
         setSetectedHotel(null)
         setError('')
+        setAllReviews([])
+        setHotelReviews([])
         localStorage.removeItem(USER_STORAGE_KEY)
     }
 
@@ -168,6 +173,52 @@ export const AppProvider  = ({children}) =>{
         }
     }
 
+    const fetchAllReviews = async()=>{
+        setIsLoading(true)
+        setError('')
+        try{
+            const response = await reviewsService.getAllReviews(token)
+            setAllReviews(response || [])
+            return response;
+        }catch(err){
+            setError(err.message)
+            return []
+        }finally{
+            setIsLoading(false)
+        }
+    }
+
+    const fetchHotelReviews = async(hotelId) =>{
+        setIsLoading(true)
+        setError('')
+        try{
+            const response = await reviewsService.getReviewsByHotelId(hotelId, token)
+            setHotelReviews(response || [])
+            return response
+        }catch(err){
+            setError(err.message)
+            return []
+        }finally{
+            setIsLoading(false)
+        }
+    }
+
+    const createReview = async (payload) =>{
+        setIsLoading(true)
+        setError('')
+        try{
+            const createdReview = await reviewsService.createReview(payload, token)
+            setAllReviews((current)=> [createdReview, ...current])
+            setHotelReviews((current)=> payload.hotelId === selectedHotel?.id ? [createdReview, ...current] : current)
+            return createdReview
+        }catch(err){
+            setError(err.message)
+            return null
+        }finally{
+            setIsLoading(false)
+        }
+    }
+
     const value = {
         auth,
         isAuthenticated,
@@ -176,6 +227,8 @@ export const AppProvider  = ({children}) =>{
         selectedHotel,
         isLoading,
         error,
+        allReviews,
+        hotelReviews,
         login,
         register,
         logout,
@@ -185,7 +238,10 @@ export const AppProvider  = ({children}) =>{
         createHotel,
         updateHotel,
         patchHotel,
-        removeHotel
+        removeHotel,
+        fetchHotelReviews,
+        createReview,
+        fetchAllReviews
     }
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>

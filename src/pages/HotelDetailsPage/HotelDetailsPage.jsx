@@ -4,6 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AlertMessage } from "../../components/AlertMessage/AlertMessage";
 import { HotelForm } from "../../components/HotelForm/HotelForm";
 import { useAppContext } from "../../context/AppContext";
+import { ReviewForm } from "../../components/ReviewForm/ReviewForm";
+import { ReviewList } from "../../components/ReviewList/ReviewList";
 
 export const HotelDetailsPage = ()=>{
        const closeModal = (modalId) => {
@@ -30,14 +32,18 @@ export const HotelDetailsPage = ()=>{
             fetchHotelById,
             updateHotel,
             patchHotel,
-            removeHotel
+            removeHotel,
+            hotelReviews,
+            createReview,
+            fetchHotelReviews
         } = useAppContext();
 
         const [patchSummary, setPatchSummary] = useState('');
 
         useEffect(()=>{
             fetchHotelById(hotelId)
-        },[])
+            fetchHotelReviews(hotelId)
+        },[hotelId])
 
         const initialValues = useMemo(()=>{
             if(!selectedHotel){
@@ -81,6 +87,13 @@ export const HotelDetailsPage = ()=>{
             if(isDeleted){
                 navigate('/hotels')
             }
+        }
+
+        const handleCreateReview = async(payload) =>{
+          const createdReview = await createReview(payload)
+          if(createdReview)
+            closeModal('createReviewModal')
+            await fetchHotelReviews(hotelId)
         }
 
         if(!selectedHotel || !initialValues){
@@ -132,6 +145,11 @@ export const HotelDetailsPage = ()=>{
         </div>
       ) : null}
 
+      <button className="btn btn-primary mb-3" type="button" data-bs-toggle="modal" data-bs-target="#createReviewModal">
+        Prideti atsiliepimą
+      </button>
+      <ReviewList reviews={hotelReviews}/>
+
      
 
       {isOwner ? (
@@ -171,6 +189,20 @@ export const HotelDetailsPage = ()=>{
           </div>
         </div>
       ) : null}
+
+      <div className="modal fade" id="createReviewModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Palikite atsiliepima</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              <ReviewForm  hotelId={hotelId} onSubmit={handleCreateReview}/>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
         )
 }
